@@ -144,22 +144,15 @@ export const renderApp = async() => {
   });
 
   //EMPLOYEE_REMOVED
-  eventManager.subscribe(EMPLOYEE_REMOVED, (payload) => {
-    const originEmployeeList = employeeListPanel.getCurrentEmployeeList();
-    const newEmployeeList = originEmployeeList.filter((employee) => employee.id !== payload.currentEmployeeId);
+  eventManager.subscribe(EMPLOYEE_REMOVED, async() => {
+    const newEmployeeList = await getEmployees();
 
     employeeListPanel.setState({ employeeList: newEmployeeList });
   });
 
-  eventManager.subscribe(EMPLOYEE_REMOVED, ({ employeeTrackId }) => {
-    const { tracks } = addEmployeePanel.data;
-    const tracksWithoutRemovedEmployeeTrack = cloneDeep(tracks).map(track => {
-      if (track.id === employeeTrackId) {
-        track.isOccupied = true;
-      }
-
-      return track;
-    });
+  eventManager.subscribe(EMPLOYEE_REMOVED, async() => {
+    const newEmployeeList = await getEmployees();
+    const tracksWithoutRemovedEmployeeTrack = markOccupiedTracks(newEmployeeList, EMPLOYEE_TRACKS);
 
     addEmployeePanel.setState({ tracks: tracksWithoutRemovedEmployeeTrack });
     addEmployeePanel.hide();
@@ -321,9 +314,10 @@ export const renderApp = async() => {
     editEmployeePanel.setState({ isAwaitingConfirmation: true });
   });
 
-  editEmployeePanel.setAcceptRemovalButtonHandler(() => {
+  editEmployeePanel.setAcceptRemovalButtonHandler(async() => {
     const stateEditEmployeePanel = editEmployeePanel.getState();
     const employeeToRemove = cloneDeep(stateEditEmployeePanel.employee);
+    await database.collection("employees").doc(employeeToRemove.id).delete();
 
     eventManager.publish({
       type: EMPLOYEE_REMOVED,
