@@ -125,27 +125,15 @@ export const renderApp = async() => {
   });
 
   //EMPLOYEE_EDITED
-  eventManager.subscribe(EMPLOYEE_EDITED, (payload) => {
-    const originEmployeeList = employeeListPanel.getCurrentEmployeeList();
-    const newEmployeeList = originEmployeeList.map((employee) =>
-      employee.id === payload.changedEmployee.id ? payload.changedEmployee : employee);
+  eventManager.subscribe(EMPLOYEE_EDITED, async() => {
+    const newEmployeeList = await getEmployees();
 
     employeeListPanel.setState({ employeeList: newEmployeeList });
   });
 
-  eventManager.subscribe(EMPLOYEE_EDITED, (payload) => {
-    const stateAddEmployeePanel = addEmployeePanel.getState();
-    const { tracks } = stateAddEmployeePanel;
-    const { originalEmployee, changedEmployee } = payload;
-    const { trackId: originalEmployeeTrackId = undefined } = originalEmployee;
-    const { trackId: changedEmployeeTrackId = undefined } = changedEmployee;
-    const newTrackList = tracks.map((track) => {
-      if (track.id === originalEmployeeTrackId || track.id === changedEmployeeTrackId) {
-        track.isOccupied = !track.isOccupied;
-      }
-
-      return track;
-    });
+  eventManager.subscribe(EMPLOYEE_EDITED, async() => {
+    const newEmployeeList = await getEmployees();
+    const newTrackList = markOccupiedTracks(newEmployeeList, EMPLOYEE_TRACKS);
 
     addEmployeePanel.setState({ tracks: newTrackList });
     addEmployeePanel.hide();
@@ -303,13 +291,19 @@ export const renderApp = async() => {
     editEmployeePanel.hide();
   });
 
-  editEmployeePanel.setSaveChangeButtonHandler((event) => {
+  editEmployeePanel.setSaveChangeButtonHandler(async(event) => {
     event.preventDefault();
 
     const stateEditEmployeePanel = editEmployeePanel.getState();
     const originalEmployee = cloneDeep(stateEditEmployeePanel.employee);
     const originalEmployeeId = originalEmployee.id;
     const changedEmployee = editEmployeePanel.getEditableEmployeeInformation(originalEmployeeId);
+    await database.collection("employees").doc(originalEmployeeId).update({
+      name: changedEmployee.name,
+      position: changedEmployee.position,
+      trackId: changedEmployee.trackId,
+      permittedZoneIds: changedEmployee.permittedZoneIds,
+    });
 
     eventManager.publish({
       type: EMPLOYEE_EDITED,
