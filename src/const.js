@@ -33,11 +33,11 @@ const points4 = [{ x: 200, y: 200 }, { x: 200, y: 250 }, { x: 250, y: 250 }, { x
 const points5 = [{ x: 400, y: 400 }, { x: 500, y: 500 }, { x: 300, y: 500 }];
 
 export const EMPLOYEE_TRACKS = [
-  new EmployeeTrack ({ id: 1, name: 1, points: points1, isOccupied: true }),
-  new EmployeeTrack ({ id: 2, name: 2, points: points2, isOccupied: false }),
-  new EmployeeTrack ({ id: 3, name: 3, points: points3, isOccupied: false }),
-  new EmployeeTrack ({ id: 4, name: 4, points: points4, isOccupied: true }),
-  new EmployeeTrack ({ id: 5, name: 5, points: points5, isOccupied: true })
+  new EmployeeTrack ({ id: 1, name: 1, points: points1, isOccupied: false }),
+  new EmployeeTrack ({ id: 2, name: 2, points: points2, isOccupied: true }),
+  new EmployeeTrack ({ id: 3, name: 3, points: points3, isOccupied: true }),
+  new EmployeeTrack ({ id: 4, name: 4, points: points4, isOccupied: false }),
+  new EmployeeTrack ({ id: 5, name: 5, points: points5, isOccupied: false })
 ];
 
 const zoneEntity1 = createZoneEntity(ZONES[0]);
