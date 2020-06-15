@@ -82,7 +82,7 @@ export const renderApp = async() => {
     { name: 'Лукин В.Р', zone: 'Цех 1' }
   ];
   const employeeList = await getEmployees();
-  const tracks = cloneDeep(EMPLOYEE_TRACKS);
+  const tracks = markOccupiedTracks(employeeList, EMPLOYEE_TRACKS);
   const zones = cloneDeep(ZONES);
   const employee = { trackId: null, permittedZoneIds: []};
 
@@ -114,10 +114,10 @@ export const renderApp = async() => {
   const eventManager = new EventManager();
 
   //EMPLOYEE_ADDED
-  eventManager.subscribe(EMPLOYEE_ADDED, (payload) => {
-    const currentEmployeeList = employeeListPanel.getCurrentEmployeeList();
+  eventManager.subscribe(EMPLOYEE_ADDED, async() => {
+    const employeeListWithNewEmployee = await getEmployees();
 
-    employeeListPanel.setState({ employeeList: [...currentEmployeeList, payload.newEmployee] });
+    employeeListPanel.setState({ employeeList: employeeListWithNewEmployee });
   });
 
   eventManager.subscribe(EMPLOYEE_ADDED, (payload) => {
@@ -271,12 +271,16 @@ export const renderApp = async() => {
     addEmployeePanel.hide();
   });
 
-  addEmployeePanel.setAddEmployeeButtonHandler((event) => {
+  addEmployeePanel.setAddEmployeeButtonHandler(async(event) => {
     event.preventDefault();
 
     const newEmployee = addEmployeePanel.getNewEmployee();
-    const stateAddEmployeePanel = addEmployeePanel.getState();
-    const { tracks } = stateAddEmployeePanel;
+    await database.collection("employees").doc(newEmployee.id).set({
+      name: newEmployee.name,
+      position: newEmployee.position,
+      trackId: newEmployee.trackId,
+      permittedZoneIds: newEmployee.permittedZoneIds,
+    });
 
     eventManager.publish({
       type: EMPLOYEE_ADDED,
@@ -285,13 +289,8 @@ export const renderApp = async() => {
       }
     });
 
-    const tracksWithoutAddedEmployeeTrack = tracks.map((track) => {
-      if (track.id === newEmployee.trackId) {
-        track.isOccupied = !track.isOccupied;
-      }
-
-      return track;
-    });
+    const employeeList = await getEmployees();
+    const tracksWithoutAddedEmployeeTrack = markOccupiedTracks(employeeList, EMPLOYEE_TRACKS);
 
     addEmployeePanel.setState({ tracks: tracksWithoutAddedEmployeeTrack, zones });
     addEmployeePanel.clearForm();
